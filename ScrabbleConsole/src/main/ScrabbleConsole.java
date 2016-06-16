@@ -11,7 +11,7 @@ import dictionary.Dictionary;
 
 public class ScrabbleConsole {
 	public static void main(String[] args) throws IOException {
-		BufferedReader br = new BufferedReader(new FileReader("/Users/vigneshiyer/Documents/workspace/ScrabbleMasterConsole/src/dictionary/words.txt"));
+		BufferedReader br = new BufferedReader(new FileReader("resources/words.txt"));
 		Dictionary dict = new Dictionary();
 		String str;
 		while ((str = br.readLine()) != null) {
