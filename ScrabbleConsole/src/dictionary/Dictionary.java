@@ -1,0 +1,186 @@
+package dictionary;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+class TrieNode {
+	private char data;
+	public char getData() {
+		return data;
+	}
+	private Map<Character,TrieNode> map = new HashMap<Character,TrieNode>(26);
+	private boolean wordEndsHere = false;
+	
+	public boolean isWordEndsHere() {
+		return wordEndsHere;
+	}
+	public void setWordEndsHere(boolean wordEndsHere) {
+		this.wordEndsHere = wordEndsHere;
+	}
+	public Map<Character, TrieNode> getMap() {
+		return map;
+	}
+	public TrieNode(char data) {
+		this.data = data;
+	}
+}
+
+public class Dictionary {
+	private TrieNode root;
+	
+	public Dictionary() {
+		// root is null node
+		root = new TrieNode('\0');
+	}
+	
+	public Map<Integer,Set<String>> getDictionaryWordsWithTheseLetters(char[] input) {
+		Map<Integer,Set<String>> result = new HashMap<Integer,Set<String>>();
+		if (input == null || input.length == 0) {
+			return result;
+		}
+		Set<Character> set = new HashSet<Character>();		
+		int size = input.length;
+		for (int i = 0; i < size; i++) {
+			char ch = input[i];
+			if (!set.contains(ch)) {
+				set.add(ch);
+				StringBuilder s = new StringBuilder();
+				s.append(ch);
+				Set<Integer> setLetters = new HashSet<Integer>();
+				setLetters.add(i);
+				findWordsRecursive(s,setLetters,input,result);
+			}
+		}
+		return result;
+	}
+	
+	private Map<Integer,Set<String>> findWordsRecursive (StringBuilder s, Set<Integer> letters, char[] input, Map<Integer,Set<String>> result) {
+		if (s == null) {
+			return result;
+		}
+		
+		if (!startsWith(s.toString())) {
+			return result;
+		}
+		
+		if (search(s.toString())){
+			int len = s.length();
+			Set<String> set;
+			if (result.containsKey(len)) {
+				set = result.get(len);
+			}
+			else {
+				set = new HashSet<String>();
+			}
+			set.add(s.toString());
+			result.put(len, set);
+		}
+		
+		int size = input.length;
+		if (s.length() == size) {
+			return result;
+		}
+			
+		
+		for (int i = 0; i < size; i++) {
+			char ch = input[i];
+			if (!letters.contains(i)){
+				Set<Integer> set = new HashSet<Integer>(letters);
+				set.add(i);
+				StringBuilder st = new StringBuilder(s);
+				st.append(ch);
+				findWordsRecursive(st, set, input, result);
+			}
+		}
+		
+		return result;
+		
+	}
+	
+	
+	
+	
+	public void insert(String word) {
+		if (word == null || word.trim().length() == 0) {
+			return;
+		}
+		
+		char[] arr = word.toCharArray();
+		TrieNode itr = root;
+		Map<Character,TrieNode> map = itr.getMap();
+		
+		for (int i = 0; i < arr.length - 1; i++) {
+			if (!map.containsKey(arr[i])) {
+				map.put(arr[i], new TrieNode(arr[i]));
+			}
+			itr = map.get(arr[i]);
+			map = itr.getMap();			
+		}
+		
+		if (map.containsKey(arr[arr.length-1])) {
+			map.get(arr[arr.length-1]).setWordEndsHere(true);
+		}
+		else {
+			TrieNode node = new TrieNode(arr[arr.length-1]);
+			node.setWordEndsHere(true);
+			map.put(arr[arr.length-1], node);
+		}
+	}
+	
+	public boolean startsWith(String prefix) {
+		if (prefix == null || prefix.trim().length() == 0) {
+			return false;
+		}
+		TrieNode itr = root;
+		Map<Character,TrieNode> map = itr.getMap();
+		char[] arr = prefix.toCharArray();
+		
+		for (int i = 0; i < arr.length - 1; i++) {
+			if (map.containsKey(arr[i])) {
+				itr = map.get(arr[i]);
+			}
+			else {
+				return false;
+			}
+			map = itr.getMap();
+		}
+		
+		char last = arr[arr.length-1];
+		if (map.containsKey(last)) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	
+	public boolean search(String word) {
+		if (word == null || word.trim().length() == 0) {
+			return false;
+		}
+		TrieNode itr = root;
+		Map<Character,TrieNode> map = itr.getMap();
+		char[] arr = word.toCharArray();
+		
+		for (int i = 0; i < arr.length - 1; i++) {
+			if (map.containsKey(arr[i])) {
+				itr = map.get(arr[i]);
+			}
+			else {
+				return false;
+			}
+			map = itr.getMap();
+		}
+		
+		char last = arr[arr.length-1];
+		if (map.containsKey(last)) {
+			TrieNode node = map.get(last);
+			return node.isWordEndsHere();
+		}
+		else {
+			return false;
+		}
+	}
+}
