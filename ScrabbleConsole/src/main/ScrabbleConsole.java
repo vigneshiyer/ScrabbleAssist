@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,7 +33,19 @@ public class ScrabbleConsole {
 				System.out.print(arr[i]+",");
 			}
 			System.out.println("\n");
-			Map<Integer,Set<String>> words = dict.getDictionaryWordsWithTheseLetters(arr);
+			Map<Integer,Character> fixedLetters = new HashMap<Integer,Character>();
+			
+			System.out.println("Enter the fixed letters as a string. Use a '.' for any character");
+			String fstr = br.readLine();
+			
+			char[] fstrarr = fstr.toCharArray();
+						
+			for (int i = 0; i < fstrarr.length; i++) {
+				if (fstrarr[i] != '.') {
+					fixedLetters.put(i, fstrarr[i]);
+				}
+			}			
+			Map<Integer,Set<String>> words = dict.getDictionaryWordsWithTheseLetters(arr,fixedLetters,fstr.length());
 			
 			if (words != null) {
 				int count = 0;
@@ -51,16 +64,5 @@ public class ScrabbleConsole {
 			}
 		}
 		
-		
-		/*br = new BufferedReader(new InputStreamReader(System.in));
-		while(true) {
-			System.out.println("Enter search prefix ");
-			String s = br.readLine();
-			if (s.equals("")) {
-				break;
-			}
-			System.out.println(dict.startsWith(s));
-		}
-		br.close();*/
 	}
 }

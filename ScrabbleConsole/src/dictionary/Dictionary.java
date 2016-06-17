@@ -12,7 +12,7 @@ class TrieNode {
 	}
 	private Map<Character,TrieNode> map = new HashMap<Character,TrieNode>(26);
 	private boolean wordEndsHere = false;
-	
+
 	public boolean isWordEndsHere() {
 		return wordEndsHere;
 	}
@@ -29,43 +29,55 @@ class TrieNode {
 
 public class Dictionary {
 	private TrieNode root;
-	
+
 	public Dictionary() {
 		// root is null node
 		root = new TrieNode('\0');
 	}
-	
-	public Map<Integer,Set<String>> getDictionaryWordsWithTheseLetters(char[] input) {
+
+	public Map<Integer,Set<String>> getDictionaryWordsWithTheseLetters(char[] input, Map<Integer,Character> fixedLetters, int requiredLength) {
 		Map<Integer,Set<String>> result = new HashMap<Integer,Set<String>>();
 		if (input == null || input.length == 0) {
 			return result;
 		}
 		Set<Character> set = new HashSet<Character>();		
 		int size = input.length;
+
 		for (int i = 0; i < size; i++) {
 			char ch = input[i];
 			if (!set.contains(ch)) {
 				set.add(ch);
 				StringBuilder s = new StringBuilder();
-				s.append(ch);
 				Set<Integer> setLetters = new HashSet<Integer>();
-				setLetters.add(i);
-				findWordsRecursive(s,setLetters,input,result);
+				findWordsRecursive(s,setLetters,input,fixedLetters,result,requiredLength);
 			}
 		}
 		return result;
 	}
-	
-	private Map<Integer,Set<String>> findWordsRecursive (StringBuilder s, Set<Integer> letters, char[] input, Map<Integer,Set<String>> result) {
+
+	private Map<Integer,Set<String>> findWordsRecursive (StringBuilder s, Set<Integer> letters, 
+			char[] input, Map<Integer,Character> fixedLetters, Map<Integer,Set<String>> result, int requiredLength) {
 		if (s == null) {
 			return result;
 		}
-		
-		if (!startsWith(s.toString())) {
+
+		if (s.length() > 0 && !startsWith(s.toString())) {
 			return result;
 		}
 		
-		if (search(s.toString())){
+		// append the fixed letters in appropriate positions
+		int stringSize = s.length();
+		
+		while (fixedLetters.containsKey(stringSize)) {
+			s.append(fixedLetters.get(stringSize));
+			stringSize = s.length();
+		}
+
+		if (s.length() > 0 && !startsWith(s.toString())) {
+			return result;
+		}
+
+		if (search(s.toString()) && (fixedLetters.size() == 0 || s.length() == requiredLength)){
 			int len = s.length();
 			Set<String> set;
 			if (result.containsKey(len)) {
@@ -77,13 +89,9 @@ public class Dictionary {
 			set.add(s.toString());
 			result.put(len, set);
 		}
-		
+
 		int size = input.length;
-		if (s.length() == size) {
-			return result;
-		}
-			
-		
+
 		for (int i = 0; i < size; i++) {
 			char ch = input[i];
 			if (!letters.contains(i)){
@@ -91,26 +99,23 @@ public class Dictionary {
 				set.add(i);
 				StringBuilder st = new StringBuilder(s);
 				st.append(ch);
-				findWordsRecursive(st, set, input, result);
+				findWordsRecursive(st, set, input, fixedLetters, result,requiredLength);
 			}
 		}
-		
+
 		return result;
-		
+
 	}
-	
-	
-	
-	
+
 	public void insert(String word) {
 		if (word == null || word.trim().length() == 0) {
 			return;
 		}
-		
+
 		char[] arr = word.toCharArray();
 		TrieNode itr = root;
 		Map<Character,TrieNode> map = itr.getMap();
-		
+
 		for (int i = 0; i < arr.length - 1; i++) {
 			if (!map.containsKey(arr[i])) {
 				map.put(arr[i], new TrieNode(arr[i]));
@@ -118,7 +123,7 @@ public class Dictionary {
 			itr = map.get(arr[i]);
 			map = itr.getMap();			
 		}
-		
+
 		if (map.containsKey(arr[arr.length-1])) {
 			map.get(arr[arr.length-1]).setWordEndsHere(true);
 		}
@@ -128,7 +133,7 @@ public class Dictionary {
 			map.put(arr[arr.length-1], node);
 		}
 	}
-	
+
 	public boolean startsWith(String prefix) {
 		if (prefix == null || prefix.trim().length() == 0) {
 			return false;
@@ -136,7 +141,7 @@ public class Dictionary {
 		TrieNode itr = root;
 		Map<Character,TrieNode> map = itr.getMap();
 		char[] arr = prefix.toCharArray();
-		
+
 		for (int i = 0; i < arr.length - 1; i++) {
 			if (map.containsKey(arr[i])) {
 				itr = map.get(arr[i]);
@@ -146,7 +151,7 @@ public class Dictionary {
 			}
 			map = itr.getMap();
 		}
-		
+
 		char last = arr[arr.length-1];
 		if (map.containsKey(last)) {
 			return true;
@@ -155,7 +160,7 @@ public class Dictionary {
 			return false;
 		}
 	}
-	
+
 	public boolean search(String word) {
 		if (word == null || word.trim().length() == 0) {
 			return false;
@@ -163,7 +168,7 @@ public class Dictionary {
 		TrieNode itr = root;
 		Map<Character,TrieNode> map = itr.getMap();
 		char[] arr = word.toCharArray();
-		
+
 		for (int i = 0; i < arr.length - 1; i++) {
 			if (map.containsKey(arr[i])) {
 				itr = map.get(arr[i]);
@@ -173,7 +178,7 @@ public class Dictionary {
 			}
 			map = itr.getMap();
 		}
-		
+
 		char last = arr[arr.length-1];
 		if (map.containsKey(last)) {
 			TrieNode node = map.get(last);
