@@ -32,20 +32,11 @@ public class ScrabbleConsole {
 			for (int i = 0; i < arr.length; i++) {
 				System.out.print(arr[i]+",");
 			}
-			System.out.println("\n");
-			Map<Integer,Character> fixedLetters = new HashMap<Integer,Character>();
-			
+			System.out.println("\n");			
 			System.out.println("Enter the fixed letters as a string. Use a '.' for any character");
-			String fstr = br.readLine();
+			String constraint = br.readLine();
 			
-			char[] fstrarr = fstr.toCharArray();
-						
-			for (int i = 0; i < fstrarr.length; i++) {
-				if (fstrarr[i] != '.') {
-					fixedLetters.put(i, fstrarr[i]);
-				}
-			}			
-			Map<Integer,Set<String>> words = dict.getDictionaryWordsWithTheseLetters(arr,fixedLetters,fstr.length());
+			Map<Integer,Set<String>> words = dict.getPossibleDictionaryWords(str,constraint);
 			
 			if (words != null) {
 				int count = 0;
