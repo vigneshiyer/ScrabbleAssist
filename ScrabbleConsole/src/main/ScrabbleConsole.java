@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 import dictionary.Dictionary;
 
@@ -36,23 +39,23 @@ public class ScrabbleConsole {
 			System.out.println("Enter the fixed letters as a string. Use a '.' for any character");
 			String constraint = br.readLine();
 			
-			Map<Integer,Set<String>> words = dict.getPossibleDictionaryWords(str,constraint);
+			Set<String> words = dict.getPossibleDictionaryWords(str,constraint);
 			
 			if (words != null) {
 				int count = 0;
-				for (Integer in : words.keySet()) {
-					System.out.println("********* "+in+" lettered words *********");
-					Set<String> set = words.get(in);
+				List<String> list = new ArrayList<String>();
+					list.addAll(words);
+					Collections.sort(list);
 					int i = 1;
-					for (String s : set) {
+					for (String s : list) {
 						System.out.println(i+". "+s);
 						i++;
 						count++;
 					}
-					System.out.println("------------------------------------\n\n");
-				}
-				System.out.println("Total words = "+count);
+					System.out.println("\nTotal words = "+count);
 			}
+				
+			
 		}
 		
 	}

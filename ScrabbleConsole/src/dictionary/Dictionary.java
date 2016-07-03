@@ -29,24 +29,30 @@ class TrieNode {
 
 public class Dictionary {
 	private TrieNode root;
+	private final char BLANK_LETTER = ' ';
 
 	public Dictionary() {
 		// root is null node
 		root = new TrieNode('\0');
 	}
 	
-	public Map<Integer,Set<String>> getPossibleDictionaryWords(String availableLetters) {
+	public Set<String> getPossibleDictionaryWords(String availableLetters) {
 		return getPossibleDictionaryWords(availableLetters,"");
 	}
 	
-
-	public Map<Integer,Set<String>> getPossibleDictionaryWords(String availableLetters, String constraint) {
-		Map<Integer,Set<String>> result = new HashMap<Integer,Set<String>>();
+	/*
+		availableLetters - a,b,c,d,e,+,g is passed as "abcde g", <space> is a blank letter
+		constraint - ...test... - . represents any available letter with the player, test represents the letters 
+		present on board
+	*/
+	public Set<String> getPossibleDictionaryWords(String availableLetters, String constraint) {
+		Set<String> result = new HashSet<String>();
 		if (availableLetters == null || availableLetters.trim().length() == 0) {
 			return result;
 		}
 		
-		char[] input = availableLetters.toCharArray();		
+		char[] input = availableLetters.toCharArray();
+		// this set maintains a collection of letters which have been considered as the first letter
 		Set<Character> set = new HashSet<Character>();		
 		int size = input.length;
 		
@@ -71,18 +77,36 @@ public class Dictionary {
 		return result;
 	}
 
-	private Map<Integer,Set<String>> findWordsRecursive (StringBuilder s, int startCharIndex, Set<Integer> letters, 
-			char[] input, Map<Integer,Character> fixedLetters, Map<Integer,Set<String>> result, int requiredLength) {
+	private Set<String> findWordsRecursive (StringBuilder s, int startCharIndex, Set<Integer> letters, 
+			char[] input, Map<Integer,Character> fixedLetters, Set<String> result, int requiredLength) {
 		if (s == null) {
 			return result;
 		}
 		
+		// empty stringbuilder
 		if (s.length() == 0) {
-			if (fixedLetters.containsKey(0)) {
-				s.append(fixedLetters.get(0));
+			// append the fixed letters in appropriate positions
+			int stringSize = s.length();			
+			while (fixedLetters.containsKey(stringSize)) {
+				s.append(fixedLetters.get(stringSize));
+				stringSize = s.length();
 			}
-			s.append(input[startCharIndex]);
-			letters.add(startCharIndex);
+			
+			char lt = input[startCharIndex];
+			if (lt == BLANK_LETTER) {
+				for (char ch = 'a'; ch <= 'z' ; ch++) {
+					s.append(ch);
+					Set<Integer> set = new HashSet<Integer>(letters);
+					set.add(startCharIndex);
+					findWordsRecursive(s,startCharIndex+1,set,input,fixedLetters,result,requiredLength);
+					s.setLength(s.length()-1);
+				}
+				return result;
+			}
+			else {
+				s.append(input[startCharIndex]);
+				letters.add(startCharIndex);
+			}			
 		}
 
 		if (s.length() > 0 && !startsWith(s.toString())) {
@@ -101,29 +125,37 @@ public class Dictionary {
 			return result;
 		}
 
-		if (search(s.toString()) && (fixedLetters.size() == 0 || s.length() == requiredLength)){
+		// valid dictionary word
+		if (search(s.toString()) && (requiredLength == 0 || s.length() == requiredLength)){
 			int len = s.length();
-			Set<String> set;
-			if (result.containsKey(len)) {
-				set = result.get(len);
-			}
-			else {
-				set = new HashSet<String>();
-			}
-			set.add(s.toString());
-			result.put(len, set);
+			result.add(s.toString());
 		}
-
+		
 		int size = input.length;
-
+		
 		for (int i = 0; i < size; i++) {
 			char ch = input[i];
-			if (!letters.contains(i)){
-				Set<Integer> set = new HashSet<Integer>(letters);
-				set.add(i);
-				StringBuilder st = new StringBuilder(s);
-				st.append(ch);
-				findWordsRecursive(st, startCharIndex, set, input, fixedLetters, result,requiredLength);
+			if (!letters.contains(i)){				
+				//check for blank letter
+				if (ch == BLANK_LETTER) {
+					for (char j = 'a'; j <= 'z'; j++) {
+						Set<Integer> set = new HashSet<Integer>(letters);
+						set.add(i);
+						StringBuilder st = new StringBuilder(s);
+						st.append(j);
+						findWordsRecursive(st, startCharIndex, set, input, fixedLetters, result,requiredLength);
+					}
+				}
+				else {
+					Set<Integer> set = new HashSet<Integer>(letters);
+					set.add(i);
+					StringBuilder st = new StringBuilder(s);
+					st.append(ch);
+					findWordsRecursive(st, startCharIndex, set, input, fixedLetters, result,requiredLength);
+					if (s.length() == 0) {
+						break;
+					}
+				}
 			}
 		}
 
