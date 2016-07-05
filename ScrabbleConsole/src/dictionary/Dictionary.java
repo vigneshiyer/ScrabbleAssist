@@ -13,7 +13,7 @@ class TrieNode {
 	private Map<Character,TrieNode> map = new HashMap<Character,TrieNode>(26);
 	private boolean wordEndsHere = false;
 
-	public boolean isWordEndsHere() {
+	public boolean doesWordEndHere() {
 		return wordEndsHere;
 	}
 	public void setWordEndsHere(boolean wordEndsHere) {
@@ -47,7 +47,7 @@ public class Dictionary {
 	*/
 	public Set<String> getPossibleDictionaryWords(String availableLetters, String constraint) {
 		Set<String> result = new HashSet<String>();
-		if (availableLetters == null || availableLetters.trim().length() == 0) {
+		if (availableLetters == null) {
 			return result;
 		}
 		
@@ -95,6 +95,13 @@ public class Dictionary {
 			char lt = input[startCharIndex];
 			if (lt == BLANK_LETTER) {
 				for (char ch = 'a'; ch <= 'z' ; ch++) {
+					
+					// this is required when we have a constraint
+					int len = s.length();
+					while (fixedLetters.containsKey(len)) {
+						s.deleteCharAt(len-1);
+						len = s.length();
+					}
 					s.append(ch);
 					Set<Integer> set = new HashSet<Integer>(letters);
 					set.add(startCharIndex);
@@ -129,6 +136,10 @@ public class Dictionary {
 		if (search(s.toString()) && (requiredLength == 0 || s.length() == requiredLength)){
 			int len = s.length();
 			result.add(s.toString());
+		}
+		
+		if (requiredLength > 0 && s.length() >= requiredLength) {
+			return result;
 		}
 		
 		int size = input.length;
@@ -238,7 +249,7 @@ public class Dictionary {
 		char last = arr[arr.length-1];
 		if (map.containsKey(last)) {
 			TrieNode node = map.get(last);
-			return node.isWordEndsHere();
+			return node.doesWordEndHere();
 		}
 		else {
 			return false;

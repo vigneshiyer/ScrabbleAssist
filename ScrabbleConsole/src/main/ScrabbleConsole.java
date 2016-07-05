@@ -5,8 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
@@ -23,19 +21,24 @@ public class ScrabbleConsole {
 		}
 		br.close();
 		//System.out.println("Done");
-		br = new BufferedReader(new InputStreamReader(System.in));
-		while (true) {
+		
+		int itr = 10;
+		while (itr >= 0) {						
+			br = new BufferedReader(new InputStreamReader(System.in));
 			System.out.println("Enter available characters as a string: ");
 			str = br.readLine();
+			
 			if (str.equals("")) {
 				break;
-			}			
+			}
+			
 			char[] arr = str.toCharArray();
 			System.out.println("Available letters: ");
 			for (int i = 0; i < arr.length; i++) {
 				System.out.print(arr[i]+",");
 			}
-			System.out.println("\n");			
+			System.out.println("\n");
+			
 			System.out.println("Enter the fixed letters as a string. Use a '.' for any character");
 			String constraint = br.readLine();
 			
@@ -54,6 +57,7 @@ public class ScrabbleConsole {
 					}
 					System.out.println("\nTotal words = "+count);
 			}
+			itr--;
 				
 			
 		}
