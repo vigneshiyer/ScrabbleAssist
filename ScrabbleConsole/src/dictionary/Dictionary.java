@@ -41,7 +41,7 @@ public class Dictionary {
 	}
 	
 	/*
-		availableLetters - a,b,c,d,e,<space>,g is passed as "abcde g", <space> is a blank letter
+		availableLetters - a,b,c,d,e,<blank>,g is passed as "abcde g", <space> is a blank letter
 		constraint - ...test... - . represents any available letter with the player, "test" represents the letters 
 		present on board
 	*/
