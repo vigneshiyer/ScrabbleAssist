@@ -41,8 +41,8 @@ public class Dictionary {
 	}
 	
 	/*
-		availableLetters - a,b,c,d,e,+,g is passed as "abcde g", <space> is a blank letter
-		constraint - ...test... - . represents any available letter with the player, test represents the letters 
+		availableLetters - a,b,c,d,e,<space>,g is passed as "abcde g", <space> is a blank letter
+		constraint - ...test... - . represents any available letter with the player, "test" represents the letters 
 		present on board
 	*/
 	public Set<String> getPossibleDictionaryWords(String availableLetters, String constraint) {
