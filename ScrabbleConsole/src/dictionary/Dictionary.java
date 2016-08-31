@@ -94,8 +94,7 @@ public class Dictionary {
 			
 			char lt = input[startCharIndex];
 			if (lt == BLANK_LETTER) {
-				for (char ch = 'a'; ch <= 'z' ; ch++) {
-					
+				for (char ch = 'a'; ch <= 'z' ; ch++) {					
 					// this is required when we have a constraint
 					int len = s.length();
 					while (fixedLetters.containsKey(len)) {
