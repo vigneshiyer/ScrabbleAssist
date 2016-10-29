@@ -2,6 +2,8 @@ package util;
 
 public class Word {
 	private String text;
+	private int x,y;
+	private Direction direction;
 	public String getText() {
 		return text;
 	}
@@ -20,20 +22,16 @@ public class Word {
 	public void setY(int y) {
 		this.y = y;
 	}
-	public boolean isVertical() {
-		return isVertical;
+	public Direction getDirection() {
+		return direction;
 	}
-	public void setVertical(boolean isVertical) {
-		this.isVertical = isVertical;
+	public void setDirection(Direction direction) {
+		this.direction = direction;
 	}
-	private int x,y;
-	boolean isVertical;
-	
 	public String toString() {
-		if (isVertical) {
+		if (direction == Direction.VERTICAL) {
 			return "{"+text+",["+x+","+y+"], Vertical}";
 		}
 		return "{"+text+",["+x+","+y+"], Horizontal}";
-	}	
-	
+	}
 }

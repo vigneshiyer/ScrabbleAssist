@@ -4,6 +4,13 @@ public class Constraint {
 	String text;
 	int startX;
 	int startY;
+	Direction direction;
+	public Direction getDirection() {
+		return direction;
+	}
+	public void setDirection(Direction direction) {
+		this.direction = direction;
+	}
 	public String getText() {
 		return text;
 	}
@@ -22,10 +29,11 @@ public class Constraint {
 	public void setY(int y) {
 		startY = y;
 	}
-	public Constraint(String text, int startX, int startY) {
+	public Constraint(String text, int startX, int startY, Direction direction) {
 		this.text = text;
 		this.startX = startX;
 		this.startY = startY;
+		this.direction = direction;
 	}
 	
 }
