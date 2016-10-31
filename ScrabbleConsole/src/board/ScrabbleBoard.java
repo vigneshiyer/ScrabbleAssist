@@ -63,7 +63,8 @@ public class ScrabbleBoard {
 			String availableLetters, Direction direction, boolean isHorizontalCalled, Set<Suggestion> set) {
 			if (direction == Direction.HORIZONTAL) {
 				char[][] transpose = getTranspose(board);
-				return getPossibleWordsUsingOneLetterOfTheWord(transpose,Y,X,word,availableLetters,Direction.VERTICAL,true,set);
+				return getPossibleWordsUsingOneLetterOfTheWord(transpose,Y,X,word,availableLetters,
+						Direction.VERTICAL,true,set);
 			}		
 			char[] arr = word.toCharArray();
 			for (int i = 0; i < arr.length; i++) {
@@ -77,10 +78,11 @@ public class ScrabbleBoard {
 				if (posX < board.length-1 && board[posX][Y+1] != EMPTY_TILE) {
 					continue;
 				}
-				int size = availableLetters.length();
+				final int size = availableLetters.length();
 				for (int j = 0; j <= size; j++) {					
 					for (int k = 0; k < size - j + 1; k++) {
-						Constraint result = generateConstraintForVerticalWord(board, posX, Y, j, k, Direction.HORIZONTAL);
+						Constraint result = generateConstraintForVerticalWord(board, posX, Y, j, k,
+								Direction.HORIZONTAL);
 						String constraint = result.getText();
 						Log.debug(result.getX() + "," + result.getY()+" "+constraint);
 						Set<String> possibleWords = dict.getPossibleDictionaryWords(availableLetters,constraint);						
@@ -89,8 +91,8 @@ public class ScrabbleBoard {
 							final int len = ele.length();
 							int yindex = result.getY();
 							for (int l = 0; l < len; l++) {
-								String verticalWord = getWordFormedOnPlacingTheSuggestedWord(board, result.getX(), yindex, 
-										ele.charAt(l), Direction.VERTICAL);
+								String verticalWord = getWordFormedOnPlacingTheSuggestedWord(board, 
+										result.getX(), yindex, ele.charAt(l), Direction.VERTICAL);
 								if (verticalWord.length() > 1) {
 									if (!dict.search(verticalWord)) {
 										Log.debug("For word "+ele+", vertical word is "+verticalWord+": INVALID");
@@ -101,13 +103,14 @@ public class ScrabbleBoard {
 										Log.debug("For word "+ele+", vertical word is "+verticalWord+": VALID");
 									}
 								}
-								yindex++;								
+								yindex++;
 							}
 							if (isValid) {
 								Log.debug("Valid word "+ ele);
-								// we use !isHorizontalCalled because if the word on board was vertical then the new word formed 
-								// using one letter of the given word must be horizontal.
-								Suggestion suggest = getSuggestion(ele, result.getY(), result.getX(), 0, !isHorizontalCalled);
+								// we use !isHorizontalCalled because if the word on board was vertical 
+								// then the new word formed using one letter of the given word must be horizontal.
+								Suggestion suggest = getSuggestion(ele, result.getY(), 
+										result.getX(), 0, !isHorizontalCalled);
 								set.add(suggest);
 							}
 							else {
@@ -118,109 +121,6 @@ public class ScrabbleBoard {
 				}
 			}
 			return set;
-	}
-	
-	// check 3	
-	private static Set<Suggestion> getPossibleWordsByPlacingLettersInAdjacentTiles(char[][] board, int X, int Y, String word, String availableLetters,
-				boolean isVertical, boolean isHorizontalCalled, Set<Suggestion> set) {
-			
-		if (!isVertical) {
-			char[][] transpose = getTranspose(board);
-			getPossibleWordsByPlacingLettersInAdjacentTiles(transpose,Y,X,word,availableLetters,true,true,set);
-		}
-		
-		// The anchor point word here is vertical
-		// Check if any letter is present to the word's left column and right column to the length of the word
-		/*
-		 * ...
-		 * .W.
-		 * EA.
-		 * .R.
-		 * .D.
-		 * ...
-		 */
-		// Here the left column can be ignored from this check because E is present. So check 1 would have been already performed on "EA"
-		List<Integer> columns = new ArrayList<Integer>();
-		// for left column
-		if (Y > 0) {
-			int size = word.length();
-			for (int i = 0; i < size; i++) {
-				if (board[X+i][Y-1] != EMPTY_TILE) {
-					columns.add(Y-1);
-					break;
-				}
-			}
-		}
-		// for right column
-		if (Y < board.length - 1) {
-			int size = word.length();
-			for (int i = 0; i < size; i++) {
-				if (board[X+i][Y+1] != EMPTY_TILE) {
-					columns.add(Y+1);
-					break;
-				}
-			}
-		}
-		
-		for (int col : columns) {
-			int size = availableLetters.length();
-			int wordSize = word.length();
-			for (int i = 0; i < wordSize; i++) {
-				StringBuilder constraint = new StringBuilder();
-				int xpos = X+i;
-				int ypos = col;
-				
-				// j represents the number of '.' in your constraint string
-				for (int j = 2; xpos >= j - 1 && j <= size; j++) {
-					int count = 0;
-					while (count < j) {
-						constraint.insert(0,".");					
-						count++;
-						xpos--;
-					}
-					// add letters touching board[xpos][ypos] tile on top
-					while (xpos >= 1 && board[xpos-1][ypos] != EMPTY_TILE) {
-						constraint.insert(0, board[xpos-1][ypos]);
-						xpos--;
-					}
-					// add letters touching board[xpos][ypos] tile on bottom
-					int tmp = X+i;
-					while (tmp < board.length - 1 && board[tmp+1][ypos] != EMPTY_TILE) {
-						constraint.append(board[tmp+1][ypos]);
-						tmp++;
-					}
-					
-					Set<String> words = dict.getPossibleDictionaryWords(availableLetters, constraint.toString());
-					for(String w : words) {
-						
-					}
-					
-					
-				}
-				
-				
-				constraint.append('.');
-				//suffix
-				while (ypos < board.length - 1 && board[xpos][ypos+1] != EMPTY_TILE) {
-					constraint.append(board[xpos][ypos+1]);
-					ypos++;					
-				}
-				ypos = col;
-				//prefix
-				while (ypos > 0 && board[xpos][ypos-1] != EMPTY_TILE) {
-					constraint.insert(0,board[xpos][ypos-1]);
-					ypos--;
-				}
-				
-				
-				
-				
-			}
-		}
-			
-			
-			
-		return set;
 	}
 	
 	
@@ -237,15 +137,17 @@ public class ScrabbleBoard {
 	 * @param set - of suggestions as a result
 	 * @return
 	 */
-	private static Set<Suggestion> getPossibleWordsUsingEntireGivenWord(char[][] board, int X, int Y, String word, String availableLetters,
-			Direction direction, boolean isHorizontalCalled, Set<Suggestion> set) {
+	private static Set<Suggestion> getPossibleWordsUsingEntireGivenWord(char[][] board, int X, int Y, 
+			String word, String availableLetters, Direction direction, 
+			boolean isHorizontalCalled, Set<Suggestion> set) {
 		if (direction == Direction.HORIZONTAL) {
 			char[][] transpose = getTranspose(board);
 			// call the same method with the transpose
-			return getPossibleWordsUsingEntireGivenWord(transpose,Y,X,word,availableLetters,Direction.VERTICAL,true,set);
+			return getPossibleWordsUsingEntireGivenWord(transpose,Y,X,word,availableLetters,
+					Direction.VERTICAL,true,set);
 		}
 		// current word is vertical for sure
-		int size = availableLetters.length();
+		final int size = availableLetters.length();
 		// i will be the number of '.' as prefix in the constraint
 		// j will be the number if '.' as suffix in the constraint
 		// in all there will be 'size' no. of '.' in the constraint; so i+j <= size
@@ -293,6 +195,169 @@ public class ScrabbleBoard {
 		return set;
 	}
 	
+	// check 3	
+	private static Set<Suggestion> getPossibleWordsByPlacingLettersInAdjacentTiles(char[][] board, int X, int Y, 
+			String word, String availableLetters, Direction direction, boolean isHorizontalCalled, 
+			Set<Suggestion> set) {
+			
+		if (direction == Direction.HORIZONTAL) {
+			char[][] transpose = getTranspose(board);
+			return getPossibleWordsByPlacingLettersInAdjacentTiles(transpose,Y,X,word,availableLetters,
+					Direction.VERTICAL,true,set);
+		}
+		
+		// The anchor point word here is vertical
+		// Check if any letter is present to the word's left column and right column to the length of the word
+		/*
+		 * ...
+		 * .W.
+		 * EA.
+		 * .R.
+		 * .D.
+		 * ...
+		 */
+		// Here the left column can be ignored from this check because E is present. So check 1 would have 
+		// been already performed on "EA"
+		List<Integer> columns = new ArrayList<Integer>();				
+		final int wordSize = word.length();
+		boolean needToCheckLeftColumn = true, needToCheckRightColumn = true;
+		for (int i = 0; i < wordSize; i++) {
+			if (Y > 0 && board[X+i][Y-1] != EMPTY_TILE) {
+				needToCheckLeftColumn = false;
+			}
+			if (Y < board.length - 1 && board[X+i][Y+1] != EMPTY_TILE) {
+				needToCheckRightColumn = false;
+			}
+		}
+		if (Y > 0 && needToCheckLeftColumn) {
+			columns.add(Y-1);
+		}
+		if (Y < board.length - 1 && needToCheckRightColumn) {
+			columns.add(Y+1);
+		}
+		for (int col : columns) {
+			final int size = availableLetters.length();
+			for (int i = 0; i < wordSize; i++) {
+				int xpos = X+i+1; // this is to include the starting char index. These constraints will commonly 
+				// have '.' j represents the number of '.' in your constraint string
+				for (int j = 2; xpos >= j - 1 && j <= size; j++) {									
+					Constraint result = generateConstraintForVerticalWord(board, xpos, col, j, 0, Direction.VERTICAL);
+					StringBuilder constraint = new StringBuilder(result.getText());
+					Set<String> words = dict.getPossibleDictionaryWords(availableLetters, constraint.toString());
+					for(String ele : words) {
+						final int len = ele.length();
+						boolean isValid = true;
+						final int xindex = result.getX();
+						for (int k = 0; k < len; k++) {
+							String horizontalWord = getWordFormedOnPlacingTheSuggestedWord(board, xindex+k, 
+									result.getY(), ele.charAt(k), Direction.HORIZONTAL);							
+							if (horizontalWord.length() == 1) {
+								continue;
+							}
+							if (!dict.search(horizontalWord)) {
+									Log.debug("For word "+ele+", horizontal word is "+horizontalWord+": INVALID");
+									isValid = false;
+									break;
+							}
+							else {
+								Log.debug("For word "+ele+", horizontal word is "+horizontalWord+": VALID");
+							}						
+						}
+						if (isValid) {
+							Log.debug("Valid word "+ ele);
+							Suggestion suggest = getSuggestion(ele, result.getX(), result.getY(), 
+									0, isHorizontalCalled);
+							set.add(suggest);
+						}
+						else {
+							Log.debug("Invalid word "+ ele);
+						}
+					}
+				}
+				
+			}
+		}
+		return set;
+	}
+	
+	// check 4
+	private static Set<Suggestion> getPossibleWordsByPlacingALetterAtStartOrEndOfGivenWord(char[][] board, int X, 
+			int Y, String word, String availableLetters, Direction direction, boolean isHorizontalCalled,
+			Set<Suggestion> set) {
+		
+		if (direction == Direction.HORIZONTAL) {
+			char[][] transpose = getTranspose(board);
+			return getPossibleWordsByPlacingALetterAtStartOrEndOfGivenWord(transpose,Y,X,word,availableLetters,
+					Direction.VERTICAL,true,set);
+		}
+		
+		if (X >= 1) {
+			// find all possible words with constraint ".<word>"
+			Set<String> words = dict.getPossibleDictionaryWords(availableLetters, "."+word);			
+			for (String ele : words) {
+				Log.debug("For word: "+ele);
+				final int size = availableLetters.length();
+				for (int i = 0; i <= size; i++) {
+					for (int j = 0; j < size - i + 1; j++) {
+						Constraint result = generateConstraintForVerticalWord(board, X-1, Y, i, j, 
+								Direction.HORIZONTAL);
+						StringBuilder constraint = new StringBuilder(result.getText());
+						// adding the word's first letter to the constraint
+						constraint.insert(i, ele.charAt(0));
+						Log.debug(result.getX() + "," + result.getY()+" "+constraint); 
+						Set<String> possibleWords = dict.getPossibleDictionaryWords(availableLetters, 
+								constraint.toString());
+						for (String itr : possibleWords) {
+							final int len = itr.length();
+							boolean isValid = true;
+							for (int k = 0; k < len; k++) {
+								String verticalWord = getWordFormedOnPlacingTheSuggestedWord(board,result.getX(),
+										result.getY()+k,itr.charAt(k),Direction.VERTICAL);
+								if (verticalWord.length() == 1) {
+									continue;
+								}
+								if (!dict.search(verticalWord)) {
+										Log.debug("For word "+ele+", vertical word is "+verticalWord+": INVALID");
+										isValid = false;
+										break;
+								}
+								else {
+									Log.debug("For word "+ele+", vertical word is "+verticalWord+": VALID");
+								}
+							}
+							if (isValid) {
+								Log.debug("Valid word "+ ele);
+								Suggestion suggest = getSuggestion(ele, result.getY(), result.getX(), 
+										0, !isHorizontalCalled);
+								set.add(suggest);
+							}
+							else {
+								Log.debug("Invalid word "+ ele);
+							}
+						}
+						
+						
+						
+					}
+				}
+			}
+		}
+		
+		int xpos = X+word.length();
+		
+		if (xpos < board.length) {
+			// find all possible words with constraint "<word>."
+			Set<String> words = dict.getPossibleDictionaryWords(availableLetters, word+".");
+			for (String ele : words) {
+				 
+			}
+		}
+		
+		return set;		
+	}
+		
+		
+	
 	private static char[][] getTranspose(char[][] board) {
 		char[][] transpose = new char[15][15];
 		for (int i = 0; i < transpose.length; i++) {
@@ -303,6 +368,8 @@ public class ScrabbleBoard {
 		return transpose;
 	}
 	
+	
+	
 	/**
 	 * 
 	 * @param board
@@ -312,7 +379,8 @@ public class ScrabbleBoard {
 	 * @param direction
 	 * @return
 	 */
-	private static String getWordFormedOnPlacingTheSuggestedWord(char[][] board, int X, int Y, char currentChar, Direction direction) {
+	private static String getWordFormedOnPlacingTheSuggestedWord(char[][] board, int X, int Y, char currentChar, 
+			Direction direction) {
 		StringBuilder word = new StringBuilder();
 		word.append(currentChar);
 		// prefix to left/top
@@ -347,7 +415,8 @@ public class ScrabbleBoard {
 	 * @param isVerticalDirection
 	 * @return
 	 */
-	private static Constraint generateConstraintForVerticalWord(char[][] board, int X, int Y, int prefixLength, int suffixLength, Direction direction) {
+	private static Constraint generateConstraintForVerticalWord(char[][] board, int X, int Y, int prefixLength, 
+			int suffixLength, Direction direction) {
 		StringBuilder constraint = new StringBuilder();
 		int count = 0;
 		int prefixIndex = direction == Direction.VERTICAL ? X : Y;
@@ -391,28 +460,33 @@ public class ScrabbleBoard {
 			suffixIndex++;
 		}
 		Constraint result = direction == Direction.VERTICAL ? 
-				new Constraint(constraint.toString(),prefixIndex,Y,Direction.VERTICAL) : new Constraint(constraint.toString(),X,prefixIndex,Direction.HORIZONTAL);		
+				new Constraint(constraint.toString(),prefixIndex,Y,Direction.VERTICAL) : 
+					new Constraint(constraint.toString(),X,prefixIndex,Direction.HORIZONTAL);		
 		return result;
 	}
 	
-	private static Set<Suggestion> findWordWithBestPossibleScore(Set<Word> wordsOnBoard, char[][] board, String availableLetters) {
+	private static Set<Suggestion> findWordWithBestPossibleScore(Set<Word> wordsOnBoard, char[][] board, 
+			String availableLetters) {
 		Set<Suggestion> suggestions = new HashSet<Suggestion>();
-		Set<Suggestion> result = new HashSet<Suggestion>();
 		if (wordsOnBoard == null || wordsOnBoard.size() == 0) {
 			return suggestions;
 		}
-		
 		for (Word word : wordsOnBoard) {
 			Direction direction = word.getDirection();
-			if (!word.getText().equals("for")) {
+			if (!word.getText().equals("ward")) {
 				continue;
 			}
-			int x = word.getX();
-			int y = word.getY();
-			result.addAll(getPossibleWordsUsingOneLetterOfTheWord(board, x, y, word.getText(), availableLetters, direction, false, suggestions));
+			int X = word.getX();
+			int Y = word.getY();
+			//getPossibleWordsUsingOneLetterOfTheWord(board, X, Y, word.getText(), availableLetters, 
+			// direction, false, suggestions);
+			//getPossibleWordsUsingEntireGivenWord(board, X, Y, word.getText(), availableLetters, 
+			// direction, false, suggestions);
+			getPossibleWordsByPlacingALetterAtStartOrEndOfGivenWord(board, X, Y, word.getText(), 
+					availableLetters, direction, false, suggestions);
 			Log.info("Done with word: "+word.getText());
 		}
-		return result;
+		return suggestions;
 	}
 	
 	private static Suggestion getSuggestion(String word, int X, int Y, int score, boolean wasBoardTransposed) {
