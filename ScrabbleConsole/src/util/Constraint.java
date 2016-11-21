@@ -35,5 +35,8 @@ public class Constraint {
 		this.startY = startY;
 		this.direction = direction;
 	}
+	public String toString() {
+		return "{Text = "+text+";X = "+startX+";Y = "+startY+"}";
+	}
 	
 }

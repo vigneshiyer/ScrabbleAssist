@@ -29,7 +29,7 @@ class TrieNode {
 
 public class Dictionary {
 	private TrieNode root;
-	private final char BLANK_LETTER = ' ';
+	private final char BLANK_LETTER = '?';
 
 	public Dictionary() {
 		// root is null node
@@ -133,7 +133,6 @@ public class Dictionary {
 
 		// valid dictionary word
 		if (search(s.toString()) && (requiredLength == 0 || s.length() == requiredLength)){
-			int len = s.length();
 			result.add(s.toString());
 		}
 		
