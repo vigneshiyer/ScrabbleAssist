@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import util.Constants;
+
 class TrieNode {
 	private char data;
 	public char getData() {
@@ -29,7 +31,7 @@ class TrieNode {
 
 public class Dictionary {
 	private TrieNode root;
-	private final char BLANK_LETTER = '?';
+	private final char BLANK_LETTER = Constants.BLANK_TILE;
 
 	public Dictionary() {
 		// root is null node
