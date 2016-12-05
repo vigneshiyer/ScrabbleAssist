@@ -1,1 +1,1 @@
-# ScrabbleConsole
+# ScrabbleAssist
