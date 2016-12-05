@@ -1,9 +1,15 @@
 package wordsuggester;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -22,6 +28,8 @@ public class WordSuggester {
 	static char[][] inputBoard, transposedBoard;
 	static int[][] tileScoreLetter, tileScoreWord;
 	static String availableLetters;
+	static final int MAX_SUGGESTIONS = 10;
+	static Comparator<Suggestion> byScore = (Suggestion o1, Suggestion o2)-> Integer.compare(o1.getScore(), o2.getScore());
 
 	// a to z letter scores
 	static final int[] letterValues = {1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3, 1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10};
@@ -30,11 +38,11 @@ public class WordSuggester {
 		WordSuggester.dict = dict;
 	}
 
-	public Set<Suggestion> findWordWithBestPossibleScore(Set<Word> wordsOnBoard, char[][] board, int[][] tileScoreLetter, int[][] tileScoreWord,
-			String availableLetters) {
-		Set<Suggestion> suggestions = new HashSet<Suggestion>();
-		if (wordsOnBoard == null || wordsOnBoard.size() == 0) {
-			return suggestions;
+	public CompletableFuture<List<Suggestion>> findWordWithBestPossibleScoreAsync(Set<Word> wordsOnBoard, char[][] board, int[][] tileScoreLetter, int[][] tileScoreWord,
+			String availableLetters, int noOfSuggestions) throws ExecutionException, InterruptedException {
+		final long startTime = System.currentTimeMillis();
+		if (wordsOnBoard == null || wordsOnBoard.size() == 0 || noOfSuggestions <= 0) {
+			return CompletableFuture.completedFuture(Collections.emptyList());
 		}
 
 		WordSuggester.inputBoard = board;
@@ -43,26 +51,63 @@ public class WordSuggester {
 		WordSuggester.transposedBoard = getTranspose(board);
 		WordSuggester.availableLetters = availableLetters;
 
+		List<CompletableFuture<Set<Suggestion>>> list = new ArrayList<CompletableFuture<Set<Suggestion>>>();
+
 		for (Word word : wordsOnBoard) {
 			Direction direction = word.getDirection();
 			int X = word.getX();
 			int Y = word.getY();
-			Log.info("Checking with word: "+word.getText());
+			Log.debug("Checking with word: "+word.getText());
 			final int startX = direction == Direction.VERTICAL ? X : Y;
 			final int startY = direction == Direction.VERTICAL ? Y : X;
 			final boolean isTransposed = direction == Direction.HORIZONTAL;
-			suggestions.addAll(getPossibleWordsUsingEntireGivenWord(startX, startY, word.getText(), isTransposed));
-			Log.debug("Completed Entire Word Check");
-			suggestions.addAll(getPossibleWordsUsingOneLetterOfTheWord(startX, startY, word.getText(), isTransposed));
-			Log.debug("Completed Per Letter Check");
-			suggestions.addAll(getPossibleWordsByPlacingLettersInAdjacentTiles(startX, startY, word.getText(), isTransposed));
-			Log.debug("Completed Adjacent Tiles Check");
-			suggestions.addAll(getPossibleWordsByPlacingALetterAtStartOfGivenWord(startX, startY, word.getText(), isTransposed));
-			Log.debug("Completed Start of Given Word Check");
-			suggestions.addAll(getPossibleWordsByPlacingALetterAtEndOfGivenWord(startX, startY, word.getText(), isTransposed));
+			list.addAll(performAllChecksAroundGivenWord(startX, startY, word.getText(), isTransposed));
 			Log.debug("Completed End of Given Word Check");
 		}
-		return suggestions;
+		@SuppressWarnings("unchecked")
+		CompletableFuture<Set<Suggestion>>[] arrayList = list.toArray(new CompletableFuture[list.size()]);
+		CompletableFuture<List<Set<Suggestion>>> output = CompletableFuture.allOf(arrayList)
+				.thenApply(f -> list.stream().map(v -> v.join()).collect(Collectors.toList()));
+
+		CompletableFuture<List<Suggestion>> resultFuture =  output.thenApply(l -> {
+			return l.stream().flatMap(set -> set.stream()).sorted(byScore.reversed())
+					.limit(Math.min(noOfSuggestions, MAX_SUGGESTIONS))
+					.collect(Collectors.toList());
+		});
+		final long endTime = System.currentTimeMillis();
+		System.out.println("Total execution time of WordSuggester: "+(endTime - startTime));
+		return resultFuture;
+	}
+
+
+	private List<CompletableFuture<Set<Suggestion>>> performAllChecksAroundGivenWord(int startX, int startY, String word,	boolean isTransposed) throws ExecutionException, InterruptedException {
+		CompletableFuture<Set<Suggestion>> entireWordFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsUsingEntireGivenWord
+				(startX, startY, word, isTransposed));
+		//System.out.println("Completed Entire Word Check");
+		Log.debug("Completed Entire Word Check");
+
+		CompletableFuture<Set<Suggestion>> oneLetterFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsUsingOneLetterOfTheWord
+				(startX, startY, word, isTransposed));
+		//System.out.println("Completed Per Letter Check");
+		Log.debug("Completed Per Letter Check");
+
+		CompletableFuture<Set<Suggestion>> adjacentFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsByPlacingLettersInAdjacentTiles
+				(startX, startY, word, isTransposed));
+		//System.out.println("Completed Adjacent Tiles Check");
+		Log.debug("Completed Adjacent Tiles Check");
+
+		CompletableFuture<Set<Suggestion>> startFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsByPlacingALetterAtStartOfGivenWord
+				(startX, startY, word, isTransposed));
+		//System.out.println("Completed Start of Given Word Check");
+		Log.debug("Completed Start of Given Word Check");
+
+		CompletableFuture<Set<Suggestion>> endFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsByPlacingALetterAtEndOfGivenWord
+				(startX, startY, word, isTransposed));
+		//System.out.println("Completed End of Given Word Check");
+		Log.debug("Completed End of Given Word Check");
+
+		return Arrays.asList(entireWordFuture, oneLetterFuture, adjacentFuture, startFuture, endFuture);
+
 	}
 
 	/**
@@ -165,6 +210,7 @@ public class WordSuggester {
 	 * @return
 	 */
 	private Set<Suggestion> getPossibleWordsUsingEntireGivenWord(int X, int Y, String word,	boolean isTransposed) {
+		//System.out.println("Called entire given method");
 		final char[][] board = isTransposed ? transposedBoard : inputBoard;
 		Set<Suggestion> suggestions = new HashSet<Suggestion>();
 		// current word is vertical for sure
@@ -218,6 +264,7 @@ public class WordSuggester {
 				}
 			}
 		}
+		//System.out.println("Returning from entire given method");
 		return suggestions;
 	}
 
@@ -235,6 +282,7 @@ public class WordSuggester {
 	// check 3
 	private Set<Suggestion> getPossibleWordsByPlacingLettersInAdjacentTiles(int X, int Y, String word,
 			boolean isTransposed) {
+		//System.out.println("Called adjacent method");
 		final char[][] board = isTransposed ? transposedBoard : inputBoard;
 		Set<Suggestion> suggestions = new HashSet<Suggestion>();
 		// The anchor point word here is vertical
@@ -318,6 +366,7 @@ public class WordSuggester {
 
 			}
 		}
+		//System.out.println("Returning from adjacent method");
 		return suggestions;
 	}
 
@@ -641,7 +690,7 @@ public class WordSuggester {
 			ch = board[posX][posY];
 			boolean isBlankTileUsed = false;
 			final int charScore = letterValues[arr[i]-97];
-			System.out.println(word + ", "+X+", "+Y+" "+ch+" "+arr[i]);
+			Log.debug(word + ", "+X+", "+Y+" "+ch+" "+arr[i]);
 			if (ch == EMPTY_TILE) {
 				// ch will be placed at this tile
 				if (availableLetters.indexOf(arr[i]) == -1) {

@@ -3,8 +3,11 @@ package main;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.log4j.Logger;
 
@@ -22,7 +25,8 @@ public class ScrabbleConsole {
 	static final String INPUT = "cursayi";
 	static WordSuggester wordSuggester;
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+		final long startTime = System.currentTimeMillis();
 		char[][] board;;
 		int[][] tileScoreLetter, tileScoreWord;
 		// Build the Trie
@@ -52,13 +56,15 @@ public class ScrabbleConsole {
 		for (Word word : wordsSet) {
 			System.out.println(word);
 		}
-		Set<Suggestion> set = new HashSet<Suggestion>();
-		set = wordSuggester.findWordWithBestPossibleScore(wordsSet, board, tileScoreLetter, tileScoreWord, INPUT);
+		List<Suggestion> list = new ArrayList<Suggestion>();
+		list = wordSuggester.findWordWithBestPossibleScoreAsync(wordsSet, board, tileScoreLetter, tileScoreWord, INPUT, 8).get();
 		int i = 1;
-		for (Suggestion s : set) {
+		for (Suggestion s : list) {
 			System.out.println(i+". "+s);
 			i++;
 		}
+		final long endTime = System.currentTimeMillis();
+		System.out.println("Total execution time of the program: "+(endTime - startTime));
 	}
 	private static char[][] readBoardFromInputFile(String filename) throws IOException {
 		char[][] input = new char[15][15];
