@@ -28,7 +28,7 @@ public class WordSuggester {
 	static char[][] inputBoard, transposedBoard;
 	static int[][] tileScoreLetter, tileScoreWord;
 	static String availableLetters;
-	static final int MAX_SUGGESTIONS = 10;
+	static final int MAX_SUGGESTIONS = 50;
 	static Comparator<Suggestion> byScore = (Suggestion o1, Suggestion o2)-> Integer.compare(o1.getScore(), o2.getScore());
 
 	// a to z letter scores
@@ -38,11 +38,42 @@ public class WordSuggester {
 		WordSuggester.dict = dict;
 	}
 
-	public CompletableFuture<List<Suggestion>> findWordWithBestPossibleScoreAsync(Set<Word> wordsOnBoard, char[][] board, int[][] tileScoreLetter, int[][] tileScoreWord,
+	public List<Suggestion> findWordWithBestPossibleScore(Word[] wordsOnBoard, char[][] board, int[][] tileScoreLetter, int[][] tileScoreWord,
+			String availableLetters, int noOfSuggestions) throws ExecutionException, InterruptedException {
+
+		if (wordsOnBoard == null || wordsOnBoard.length == 0 || noOfSuggestions <= 0) {
+			return Collections.emptyList();
+		}
+
+		WordSuggester.inputBoard = board;
+		WordSuggester.tileScoreLetter = tileScoreLetter;
+		WordSuggester.tileScoreWord = tileScoreWord;
+		WordSuggester.transposedBoard = getTranspose(board);
+		WordSuggester.availableLetters = availableLetters;
+
+		List<Suggestion> result = new ArrayList<Suggestion>();
+
+		for (Word word : wordsOnBoard) {
+			Direction direction = word.getDirection();
+			int X = word.getX();
+			int Y = word.getY();
+			Log.debug("Checking with word: "+word.getText());
+			final int startX = direction == Direction.VERTICAL ? X : Y;
+			final int startY = direction == Direction.VERTICAL ? Y : X;
+			final boolean isTransposed = direction == Direction.HORIZONTAL;
+			result.addAll(performAllChecksAroundGivenWord(startX, startY, word.getText(), isTransposed));
+			Log.debug("Completed End of Given Word Check");
+		}
+		result.sort(byScore.reversed());
+		return result.subList(0, Math.min(result.size(), Math.max(1, noOfSuggestions)));
+
+	}
+
+	public List<Suggestion> findWordWithBestPossibleScoreAsync(Word[] wordsOnBoard, char[][] board, int[][] tileScoreLetter, int[][] tileScoreWord,
 			String availableLetters, int noOfSuggestions) throws ExecutionException, InterruptedException {
 		final long startTime = System.currentTimeMillis();
-		if (wordsOnBoard == null || wordsOnBoard.size() == 0 || noOfSuggestions <= 0) {
-			return CompletableFuture.completedFuture(Collections.emptyList());
+		if (wordsOnBoard == null || wordsOnBoard.length == 0 || noOfSuggestions <= 0) {
+			return Collections.emptyList();
 		}
 
 		WordSuggester.inputBoard = board;
@@ -61,7 +92,7 @@ public class WordSuggester {
 			final int startX = direction == Direction.VERTICAL ? X : Y;
 			final int startY = direction == Direction.VERTICAL ? Y : X;
 			final boolean isTransposed = direction == Direction.HORIZONTAL;
-			list.addAll(performAllChecksAroundGivenWord(startX, startY, word.getText(), isTransposed));
+			list.addAll(performAllChecksAroundGivenWordAsync(startX, startY, word.getText(), isTransposed));
 			Log.debug("Completed End of Given Word Check");
 		}
 		@SuppressWarnings("unchecked")
@@ -69,18 +100,31 @@ public class WordSuggester {
 		CompletableFuture<List<Set<Suggestion>>> output = CompletableFuture.allOf(arrayList)
 				.thenApply(f -> list.stream().map(v -> v.join()).collect(Collectors.toList()));
 
-		CompletableFuture<List<Suggestion>> resultFuture =  output.thenApply(l -> {
+
+		final long endTime = System.currentTimeMillis();
+		System.out.println("Total execution time of WordSuggester: "+(endTime - startTime));
+
+		return output.thenApply(l -> {
 			return l.stream().flatMap(set -> set.stream()).sorted(byScore.reversed())
 					.limit(Math.min(noOfSuggestions, MAX_SUGGESTIONS))
 					.collect(Collectors.toList());
-		});
-		final long endTime = System.currentTimeMillis();
-		System.out.println("Total execution time of WordSuggester: "+(endTime - startTime));
-		return resultFuture;
+		}).get();
+
+	}
+
+	private List<Suggestion> performAllChecksAroundGivenWord(int startX, int startY, String word, boolean isTransposed) throws ExecutionException, InterruptedException {
+		List<Suggestion> result = new ArrayList<Suggestion>();
+		result.addAll(getPossibleWordsUsingEntireGivenWord(startX, startY, word, isTransposed));
+		result.addAll(getPossibleWordsUsingOneLetterOfTheWord(startX, startY, word, isTransposed));
+		result.addAll(getPossibleWordsByPlacingLettersInAdjacentTiles(startX, startY, word, isTransposed));
+		result.addAll(getPossibleWordsByPlacingALetterAtStartOfGivenWord(startX, startY, word, isTransposed));
+		result.addAll(getPossibleWordsByPlacingALetterAtEndOfGivenWord(startX, startY, word, isTransposed));
+		Log.debug("Completed Entire Word Check");
+		return result;
 	}
 
 
-	private List<CompletableFuture<Set<Suggestion>>> performAllChecksAroundGivenWord(int startX, int startY, String word,	boolean isTransposed) throws ExecutionException, InterruptedException {
+	private List<CompletableFuture<Set<Suggestion>>> performAllChecksAroundGivenWordAsync(int startX, int startY, String word,	boolean isTransposed) throws ExecutionException, InterruptedException {
 		CompletableFuture<Set<Suggestion>> entireWordFuture = CompletableFuture.supplyAsync(() -> getPossibleWordsUsingEntireGivenWord
 				(startX, startY, word, isTransposed));
 		//System.out.println("Completed Entire Word Check");
@@ -575,9 +619,19 @@ public class WordSuggester {
 			suffixIndex++;
 		}
 		if (direction == Direction.HORIZONTAL) {
-			return new Word(word.toString(), X, prefixIndex, direction);
+			Word w = new Word();
+			w.setText(word.toString());
+			w.setX(Math.max(0, X));
+			w.setY(Math.max(0, prefixIndex));
+			w.setDirection(direction);
+			return w;
 		}
-		return new Word(word.toString(), prefixIndex, Y, direction);
+		Word w = new Word();
+		w.setText(word.toString());
+		w.setX(Math.max(0, prefixIndex));
+		w.setY(Math.max(0, Y));
+		w.setDirection(direction);
+		return w;
 	}
 
 	/**
@@ -645,10 +699,19 @@ public class WordSuggester {
 			// because prefixIndex starts one row/column previous to the currentChar.
 			prefixIndex++;
 		}
-		Word result = direction == Direction.VERTICAL ?
-				new Word(constraint.toString(),prefixIndex,Y,Direction.VERTICAL) :
-					new Word(constraint.toString(),X,prefixIndex,Direction.HORIZONTAL);
-				return result;
+		Word result = new Word();
+		result.setText(constraint.toString());
+		result.setDirection(direction);
+
+		if (direction == Direction.VERTICAL) {
+			result.setX(prefixIndex);
+			result.setY(Y);
+		}
+		else {
+			result.setX(X);
+			result.setY(prefixIndex);
+		}
+		return result;
 	}
 
 	/**
@@ -664,14 +727,15 @@ public class WordSuggester {
 		if (isTransposed) {
 			// this function was called with the current word as horizontal, so the
 			// new word formed must be horizontal : false
-			return new Suggestion(word,Y,X,score,false);
+			return new Suggestion(word,Y,X,score,Direction.HORIZONTAL);
 		}
 		// this function was called with the current word as vertical, so the
 		// new word formed must be vertical : true
-		return new Suggestion(word,X,Y,score,true);
+		return new Suggestion(word,X,Y,score,Direction.VERTICAL);
 	}
 
 	private int calculateScore(int X, int Y, String word, Direction direction, boolean isTransposed) {
+		Log.debug("calculateScore: "+X+" "+Y);
 		final char[][] board = isTransposed ? transposedBoard : inputBoard;
 		int score = 0;
 		char[] arr = word.toCharArray();

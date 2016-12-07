@@ -5,10 +5,19 @@ public class Word {
 	private int x,y;
 	private Direction direction;
 
-	public Word(String text, int startX, int startY, Direction direction) {
+	public void setText(String text) {
 		this.text = text;
-		this.x = startX;
-		this.y = startY;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+
+	public void setDirection(Direction direction) {
 		this.direction = direction;
 	}
 

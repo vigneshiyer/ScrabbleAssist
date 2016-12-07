@@ -1,83 +1,88 @@
 package util;
 
 public class Suggestion {
-	String text;
-	int startX,startY;
+	String word;
+	int x,y;
 	int score;
-	boolean isVertical;
-	
-	public Suggestion(String text, int startX, int startY, int score, boolean isVertical) {
-		this.text = text;
-		this.startX = startX;
-		this.startY = startY;
-		this.score = score;
-		this.isVertical = isVertical;
+	Direction direction;
+
+	public int getX() {
+		return x;
 	}
-	
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public int getY() {
+		return y;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+
+	public Direction getDirection() {
+		return direction;
+	}
+
+	public void setDirection(Direction direction) {
+		this.direction = direction;
+	}
+
+	public Suggestion(String text, int x, int y, int score, Direction direction) {
+		this.word = text;
+		this.x = x;
+		this.y = y;
+		this.score = score;
+		this.direction = direction;
+	}
+
 	public String getText() {
-		return text;
+		return word;
 	}
 	public void setText(String text) {
-		this.text = text;
+		this.word = text;
 	}
-	public int getStartX() {
-		return startX;
-	}
-	public void setStartX(int startX) {
-		this.startX = startX;
-	}
-	public int getStartY() {
-		return startY;
-	}
-	public void setStartY(int startY) {
-		this.startY = startY;
-	}
+
 	public int getScore() {
 		return score;
 	}
 	public void setScore(int score) {
 		this.score = score;
 	}
-	public boolean isVertical() {
-		return isVertical;
-	}
-	public void setVertical(boolean isVertical) {
-		this.isVertical = isVertical;
-	}
-	
+
+
 	@Override
 	public int hashCode() {
 		int hash = 31;
-		int one = (this.text != null ? this.text.hashCode() : 0);
-		int two = hash * this.startX;
-		int three = hash * this.startY;
+		int one = (this.word != null ? this.word.hashCode() : 0);
+		int two = hash * this.x;
+		int three = hash * this.y;
 		return (hash * (one + two + three));
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {
 			return false;
 		}
 		Suggestion s = (Suggestion)obj;
-		if (this.text == null) {
-			if (s.text != null) {
+		if (this.word == null) {
+			if (s.word != null) {
 				return false;
 			}
-			return this.startX == s.startX && this.startY == s.startY && this.isVertical == s.isVertical;
+			return this.x == s.x && this.y == s.y && this.direction == s.direction;
 		}
-		
-		return this.text.equals(s.text) && this.startX == s.startX
-				&& this.startY == s.startY && this.isVertical == s.isVertical;
-		
+
+		return this.word.equals(s.word) && this.x == s.x
+				&& this.y == s.y && this.direction == s.direction;
+
 	}
-	
+
 	@Override
 	public String toString() {
-		if (isVertical) {
-			return "{Word: "+text+", X: "+startX+", Y: "+startY+", Score: "+score+", Direction: Vertical}";
-		}
-		return "{Word: "+text+", X: "+startX+", Y: "+startY+", Score: "+score+", Direction: Horizontal}";
+		return "{Word: "+word+", X: "+x+", Y: "+y+", Score: "+score+", Direction: "+direction+"}";
 	}
-	
+
 }

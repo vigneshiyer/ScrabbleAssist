@@ -1,4 +1,4 @@
-package main;
+package console;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -53,11 +53,15 @@ public class ScrabbleConsole {
 
 		Log.info("Found Horizontal And Vertical Words");
 
+		Word[] input = new Word[wordsSet.size()];
+		int pos = 0;
 		for (Word word : wordsSet) {
+			input[pos++] = word;
 			System.out.println(word);
 		}
+
 		List<Suggestion> list = new ArrayList<Suggestion>();
-		list = wordSuggester.findWordWithBestPossibleScoreAsync(wordsSet, board, tileScoreLetter, tileScoreWord, INPUT, 8).get();
+		list = wordSuggester.findWordWithBestPossibleScore(input, board, tileScoreLetter, tileScoreWord, INPUT, 8);
 		int i = 1;
 		for (Suggestion s : list) {
 			System.out.println(i+". "+s);
@@ -126,10 +130,18 @@ public class ScrabbleConsole {
 						String text = sb.toString();
 						Word word;
 						if (isHorizontal) {
-							word = new Word(text, x, y, Direction.HORIZONTAL);
+							word = new Word();
+							word.setDirection(Direction.HORIZONTAL);
+							word.setText(text);
+							word.setX(x);
+							word.setY(y);
 						}
 						else {
-							word = new Word(text, y, x, Direction.VERTICAL);
+							word = new Word();
+							word.setDirection(Direction.VERTICAL);
+							word.setText(text);
+							word.setX(y);
+							word.setY(x);
 						}
 						wordSet.add(word);
 					}
@@ -142,10 +154,18 @@ public class ScrabbleConsole {
 				String text = sb.toString();
 				Word word;
 				if (isHorizontal) {
-					word = new Word(text, x, y, Direction.HORIZONTAL);
+					word = new Word();
+					word.setDirection(Direction.HORIZONTAL);
+					word.setText(text);
+					word.setX(x);
+					word.setY(y);
 				}
 				else {
-					word = new Word(text, y, x, Direction.VERTICAL);
+					word = new Word();
+					word.setDirection(Direction.VERTICAL);
+					word.setText(text);
+					word.setX(y);
+					word.setY(x);
 				}
 				wordSet.add(word);
 			}
